@@ -1,0 +1,41 @@
+name: Linux arm64 (aarch64)
+
+# Smoke-tests the prebuilt arm64 compiler shipped in bin/.
+# No Rust bootstrap is involved: this workflow only exercises the Zeta binaries and
+# the C runtime that live on main.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'bin/zetac-linux-arm64'
+      - 'runtime/zenith_runtime.c'
+      - 'tests/simple.z'
+      - 'scripts/smoke-aarch64.sh'
+      - '.github/workflows/aarch64.yml'
+  pull_request:
+    paths:
+      - 'bin/zetac-linux-arm64'
+      - 'runtime/zenith_runtime.c'
+      - 'tests/simple.z'
+      - 'scripts/smoke-aarch64.sh'
+      - '.github/workflows/aarch64.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: aarch64 smoke test
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install LLVM 21
+        run: |
+          wget -q https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 21
+          sudo apt-get install -y -qq libllvm21
+          ls -l /usr/lib/llvm-21/lib/libLLVM.so.21.1
+
+      - name: Smoke test
+        run: bash scripts/smoke-aarch64.sh
