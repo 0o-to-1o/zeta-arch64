@@ -149,6 +149,7 @@ long zstd_compress(long dst, long dst_cap, long src, long src_size) {
 /* ───── Generic syscall wrapper (used by Zeta's syscall() built-in) ───── */
 
 long zenith_syscall(long number, long a1, long a2, long a3, long a4, long a5, long a6) {
+#if defined(__x86_64__)
     register long rax asm("rax") = number;
     register long rdi asm("rdi") = a1;
     register long rsi asm("rsi") = a2;
@@ -161,6 +162,24 @@ long zenith_syscall(long number, long a1, long a2, long a3, long a4, long a5, lo
         : "r"(rdi), "r"(rsi), "r"(rdx), "r"(r10), "r"(r8), "r"(r9)
         : "rcx", "r11", "memory");
     return rax;
+#elif defined(__aarch64__)
+    /* aarch64 takes the syscall number in x8 and the arguments in x0..x5. */
+    register long x8 asm("x8") = number;
+    register long x0 asm("x0") = a1;
+    register long x1 asm("x1") = a2;
+    register long x2 asm("x2") = a3;
+    register long x3 asm("x3") = a4;
+    register long x4 asm("x4") = a5;
+    register long x5 asm("x5") = a6;
+    asm volatile("svc #0"
+        : "+r"(x0)
+        : "r"(x8), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5)
+        : "memory");
+    return x0;
+#else
+    /* Portable fallback: glibc's syscall() handles the register mapping. */
+    return syscall(number, a1, a2, a3, a4, a5, a6);
+#endif
 }
 
 /* ───── io_uring (raw syscalls) ───── */
