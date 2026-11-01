@@ -183,11 +183,31 @@ cd zeta
 ./hello
 ```
 
+### Linux on ARM64 (aarch64)
+
+`bin/zetac-linux-arm64` is the same compiler for 64-bit ARM Linux — Raspberry Pi 5,
+Graviton, Ampere, Apple silicon VMs. It needs LLVM 21.1 at run time:
+
+```bash
+wget -q https://apt.llvm.org/llvm.sh && chmod +x llvm.sh
+sudo ./llvm.sh 21 && sudo apt-get install -y libllvm21
+
+export LD_LIBRARY_PATH=/usr/lib/llvm-21/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+./bin/zetac-linux-arm64 tests/simple.z -o simple
+./simple; echo $?        # 42
+
+bash scripts/smoke-aarch64.sh   # verify compiler + runtime
+```
+
+See [docs/ARM64-AARCH64-SUPPORT.md](docs/ARM64-AARCH64-SUPPORT.md) for requirements,
+the portable `syscall()` wrapper and the remaining self-hosting gap.
+
 ## Project Layout
 
 ```
 zeta/
-├── bin/              # Pre-built zetac compiler
+├── bin/              # Pre-built zetac compiler (Linux x86-64, Linux arm64, macOS)
+├── scripts/          # Verification helpers (smoke-aarch64.sh)
 ├── src/              # Self-hosted Zeta sources (51+ files)
 │   ├── main.z        # Entry point
 │   ├── frontend/     # Lexer, parser, AST
